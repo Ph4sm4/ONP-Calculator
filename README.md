@@ -4,7 +4,8 @@
 
 #### Apart from a neat design, it displays operations chosen in current equation as well as tracks the history of your calculations.
 
-![calc-image](image-1.png)
+![calculator-img](https://github.com/user-attachments/assets/8b258acf-17ef-4354-bf0b-911eea06a06c)
+
 
 ### Examples of transformed equations
 
