@@ -1,8 +1,8 @@
 # ONP Calculator
 
-#### Calculates the desired value using Reverse Polish Notation algorithm - supporting the proper order of operations.
+#### Calculates the desired value using Reverse Polish Notation algorithm - supporting the proper order of operations. Apart from a neat design, it displays operations chosen in current equation as well as tracks the history of your calculations.
 
-#### Apart from a neat design, it displays operations chosen in current equation as well as tracks the history of your calculations.
+In the implementation the **_minus_** operator was replaced with an **_underscore_** to enable calculations on negative numbers.
 
 ![calculator-img](https://github.com/user-attachments/assets/8b258acf-17ef-4354-bf0b-911eea06a06c)
 
