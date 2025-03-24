@@ -36,9 +36,15 @@ function App() {
 		const resNeeded: boolean = equationString.endsWith(FunctionalOperator.equals);
 		if (!resNeeded) return;
 
-		const onpEquation: string = convertToOnp(equationString);
+		const onpEquation: string = convertToOnp(equationString.substring(0, equationString.length - 1));
 		console.log('onp equation:', onpEquation);
 		const value: number = calculateFromOnp(onpEquation);
+
+		if (isNaN(value)) {
+			setDisplayString('NaN');
+			setEquationString('');
+			return;
+		}
 
 		// setHistoricalOperations([
 		// 	...historicalOperations,
@@ -46,6 +52,7 @@ function App() {
 		// ]);
 		setDisplayString(value.toString());
 		setEquationString((prev) => prev + value.toString());
+		setNewEquationVar(false);
 	}, [equationString]);
 
 	function reset() {
@@ -73,7 +80,6 @@ function App() {
 		let newEquation: boolean = false;
 
 		if (equationString.includes(FunctionalOperator.equals)) {
-			console.log(equationString.substring(equationString.indexOf('=') + 1, equationString.length), equationString);
 			x = equationString.substring(equationString.indexOf('=') + 1, equationString.length);
 			newEquation = true;
 		}
@@ -235,7 +241,10 @@ function App() {
 
 							if (end === FunctionalOperator.minus || end === '-') return;
 
-							console.log('clicking minus:', equationString);
+							if (equationString.includes(FunctionalOperator.equals)) {
+								console.log(equationString.substring(equationString.indexOf('=') + 1, equationString.length), equationString);
+								setEquationString(equationString.substring(equationString.indexOf('=') + 1, equationString.length));
+							}
 
 							const treatAsInversion: FunctionalOperator[] = [FunctionalOperator.div, FunctionalOperator.mult];
 							// in case of a minus we need to replace only if it ends with a + or a -
