@@ -11,10 +11,12 @@ import {
 	Operation,
 	FunctionalOperator,
 	isGeneralOperator,
+	GeneralOperator,
 } from './globals';
+import { TbXPowerY } from 'react-icons/tb';
+import { IoBackspaceOutline } from 'react-icons/io5';
 
 interface HistoricalOperation {
-	id: number;
 	operations: Operation[];
 	value: number;
 	equationString: string;
@@ -29,16 +31,25 @@ function App() {
 	// we are going to be taking a new value - the previous one should be overriden
 	const [newEquationVar, setNewEquationVar] = useState<boolean>(true);
 
+	const [operations, setOperations] = useState<Operation[]>([]);
+
 	// in previous calculations
 	const [historicalOperations, setHistoricalOperations] = useState<HistoricalOperation[]>([]);
 
+	const [lastCalculatedValue, setLastCalculatedValue] = useState<{ value: number; equationStr: string }>({
+		value: 0,
+		equationStr: '',
+	});
+
+	const [newEquationTrigger, setNewEquationTrigger] = useState<number>(0);
+
 	useEffect(() => {
-		const resNeeded: boolean = equationString.endsWith(FunctionalOperator.equals);
-		if (!resNeeded) return;
+		const resNeeded: boolean = equationString.endsWith(GeneralOperator.equals);
+		if (!resNeeded || !operations.length || !equationString.length) return;
 
 		const onpEquation: string = convertToOnp(equationString.substring(0, equationString.length - 1));
 		console.log('onp equation:', onpEquation);
-		const value: number = calculateFromOnp(onpEquation);
+		const value: number = restrictDigitsAfterDecimalPoint(calculateFromOnp(onpEquation).toString()) as number;
 
 		if (isNaN(value)) {
 			setDisplayString('NaN');
@@ -46,19 +57,57 @@ function App() {
 			return;
 		}
 
-		// setHistoricalOperations([
-		// 	...historicalOperations,
-		// 	{ id: historicalOperations.length + 1, operations: operations, value: value, equationString: equationString.replace('-', '_') },
-		// ]);
 		setDisplayString(value.toString());
-		setEquationString((prev) => prev + value.toString());
 		setNewEquationVar(false);
+		setLastCalculatedValue({
+			value: value,
+			equationStr: equationString + value.toString(),
+		});
+		setEquationString((prev) => prev + value.toString());
+	}, [operations]);
+
+	useEffect(() => {
+		mapEquationStringSteps(equationString);
 	}, [equationString]);
 
+	function mapEquationStringSteps(str: string) {
+		const t: Operation[] = [];
+
+		for (let i = 0; str.length; i++) {
+			let num = '';
+			while (str[i] && !isFunctionalOperator(str[i]) && str[i] !== GeneralOperator.equals) {
+				num += str[i++];
+			}
+
+			if (!str[i]) break;
+			const oper: FunctionalOperator = str[i] as FunctionalOperator; // after the number there must be an operator that we assign to that number
+
+			t.unshift({
+				value: parseFloat(num),
+				operator: oper,
+			});
+		}
+		console.log('mapping: ', t);
+
+		setOperations(t);
+	}
+
+	useEffect(() => {
+		setHistoricalOperations([
+			...historicalOperations,
+			{
+				operations: operations,
+				value: lastCalculatedValue?.value,
+				equationString: lastCalculatedValue?.equationStr.replace('-', '_'),
+			},
+		]);
+	}, [newEquationTrigger]);
+
 	function reset() {
+		if (equationString.length && operations.length) setNewEquationTrigger(new Date().getTime());
+
 		setDisplayString('0');
 		setEquationString('');
-		setHistoricalOperations([]);
 	}
 
 	function displayEquationString(eqStr: string) {
@@ -66,7 +115,7 @@ function App() {
 		for (let i = 0; i < eqStr.length; i++) {
 			if (eqStr[0] === FunctionalOperator.minus && i === 0) {
 				s += '-';
-			} else if (isFunctionalOperator(eqStr[i])) {
+			} else if (isFunctionalOperator(eqStr[i]) || eqStr[i] === GeneralOperator.equals) {
 				s += ' ' + eqStr[i].replace(FunctionalOperator.minus, '-').replace(FunctionalOperator.mult, 'x') + ' '; // we separate numbers from operators
 			} else {
 				s += eqStr[i];
@@ -75,13 +124,14 @@ function App() {
 		return s;
 	}
 
-	function handleOperatorClick(operator: FunctionalOperator) {
+	function handleOperatorClick(operator: FunctionalOperator | GeneralOperator) {
 		let x: string = equationString;
 		let newEquation: boolean = false;
 
-		if (equationString.includes(FunctionalOperator.equals)) {
-			x = equationString.substring(equationString.indexOf('=') + 1, equationString.length);
+		if (equationString.includes(GeneralOperator.equals)) {
+			x = equationString.substring(equationString.indexOf(GeneralOperator.equals) + 1, equationString.length);
 			newEquation = true;
+			setNewEquationTrigger(new Date().getTime());
 		}
 
 		setNewEquationVar(true);
@@ -106,46 +156,86 @@ function App() {
 	}
 
 	function handleNumberClick(label: string) {
-		if (equationString.includes(FunctionalOperator.equals)) {
+		if (equationString.includes(GeneralOperator.equals)) {
 			setEquationString(displayString + label);
 			setDisplayString(displayString + label);
+			setNewEquationTrigger(new Date().getTime());
 		} else {
-			setDisplayString((prev) => (prev === '0' || newEquationVar ? '' : prev) + label);
-			setEquationString((prev) => (prev === '0' ? '' : prev) + label);
+			setDisplayString((prev) => ((prev === '0' || newEquationVar) && label !== '.' ? '' : prev) + label);
+
+			if (label === '.') {
+				setEquationString((prev) => {
+					const end = prev.slice(-1);
+					if (!/\d$/.test(end)) {
+						return prev + '0.';
+					}
+					return prev + '.';
+				});
+			} else {
+				setEquationString((prev) => (prev === '0' ? '' : prev) + label);
+			}
 		}
 
 		setNewEquationVar(false);
 	}
 
+	function restrictDigitsAfterDecimalPoint(str: string) {
+		return (
+			Number(
+				parseFloat(str)
+					.toFixed(8)
+					.replace(/\.?0+$/, '')
+			) || str
+		);
+	}
+
+	function clearCurrentHistory() {
+		setHistoricalOperations([]);
+	}
+
+	function handleBackspace() {
+		if (equationString.includes(GeneralOperator.equals)) return;
+
+		if (!equationString.substring(0, equationString.length - 1)) {
+			reset();
+
+			return;
+		}
+		setDisplayString(displayString.substring(0, displayString.length - 1) || '0');
+		setEquationString(equationString.substring(0, equationString.length - 1));
+	}
+
 	return (
-		<div className="flex w-[80%] mx-auto min-h-[100vh] mt-20 justify-center">
-			<div className="w-[400px] h-[50%] bg-[#484f50] rounded-lg px-5 py-10 border-[2px] border-cyan-300 calc-holder relative">
-				<div className="bg-gray-800 rounded-lg shadow-lg px-4 py-2 text-cyan-300 font-medium text-4xl text-end tracking-wide whitespace-nowrap">
+		<div className="flex w-[90%] mx-auto min-h-[100vh] mt-20">
+			<div className="w-[500px] h-[50%] bg-[#484f50] rounded-lg px-5 py-10 border-[2px] border-cyan-300 calc-holder relative">
+				<div className="bg-gray-800 rounded-lg shadow-xl px-4 py-2 text-cyan-300 font-medium text-4xl text-end tracking-wide whitespace-nowrap border-2 border-gray-600">
 					<div className="flex flex-col gap-2 overflow-x-auto">
-						<span className="w-full">{displayString || '0'}</span>
+						<span className="w-full">{restrictDigitsAfterDecimalPoint(displayString)}</span>
 						<span className="text-white opacity-50 text-xl w-full">{displayEquationString(equationString)}</span>
 					</div>
 				</div>
 				<div
-					className={`operation-displayer bg-gray-800 absolute right-[-330px] rounded-lg top-0 text-cyan-300 w-[300px] py-4 px-2 flex flex-col max-h-[100%] overflow-y-auto
-						${equationString.length || historicalOperations.length ? 'active' : ''}
+					className={`operation-displayer bg-gray-800 absolute right-[-430px] rounded-lg top-0 text-cyan-300 w-[400px] py-4 px-6 flex flex-col max-h-[100%] overflow-y-auto
+						${historicalOperations.length || operations.length ? 'active' : ''}
 					`}>
-					<span className="font-medium tracking-wide text-white border-b-2 mb-5 pb-2 border-b-cyan-300">History: </span>
-					<ul className="flex flex-col gap-2">
-						{/* {operations.map((x: Operation, index: number) => {
+					<div className="flex items-center justify-between border-b-cyan-300 border-b-2 mb-5 pb-2 ">
+						<span className="font-medium tracking-wide text-white text-xl">History: </span>
+						<div className="cursor-pointer px-2 py-1 border border-cyan-300 rounded-md" onClick={clearCurrentHistory}>
+							clear
+						</div>
+					</div>
+					<ul className={`flex flex-col gap-2} ${operations.length ? 'mb-10' : ''}`}>
+						{operations.map((x: Operation, index: number) => {
 							return (
 								<li className="flex items-center text-2xl">
 									{x.value} <span className="ml-auto">{getIconForOperator(x.operator)}</span>
 								</li>
 							);
-						})} */}
+						})}
 					</ul>
 					{[...historicalOperations].reverse().map((x: HistoricalOperation) => {
 						return (
-							<div className="flex text-xl flex-col mt-10 gap-3">
-								<span className="font-medium text-white px-3 py-1 border rounded-md">
-									result = <i>{x.value}</i>
-								</span>
+							<div className="flex text-xl flex-col mb-10 gap-3 bg-[#1d2020] px-3 py-2 rounded-lg">
 								<span className="text-white opacity-50">{displayEquationString(x.equationString)}</span>
 								<ul className="flex flex-col gap-2">
 									{x.operations.map((a: Operation) => {
@@ -164,16 +254,21 @@ function App() {
 					<div className="text-white bg-cyan-900" onClick={reset}>
 						<span>C</span>
 					</div>
-					<div className="text-white bg-cyan-900">
+					<div className="text-white bg-cyan-900" onClick={handleBackspace}>
 						<span>
-							<FaPlusMinus size={25} />
+							<IoBackspaceOutline size={40} />
 						</span>
 					</div>
-					<div className="text-white bg-cyan-900">
+					<div
+						className="text-white bg-cyan-900"
+						onClick={() => {
+							handleOperatorClick(FunctionalOperator.pow);
+						}}>
 						<span>
-							<FaPercent size={25} />
+							<TbXPowerY />
 						</span>
 					</div>
+
 					<div
 						className="text-cyan-300 bg-gray-600"
 						onClick={() => {
@@ -241,7 +336,7 @@ function App() {
 
 							if (end === FunctionalOperator.minus || end === '-') return;
 
-							if (equationString.includes(FunctionalOperator.equals)) {
+							if (equationString.includes(GeneralOperator.equals)) {
 								console.log(equationString.substring(equationString.indexOf('=') + 1, equationString.length), equationString);
 								setEquationString(equationString.substring(equationString.indexOf('=') + 1, equationString.length));
 							}
@@ -310,7 +405,7 @@ function App() {
 					<div
 						className="text-cyan-300 bg-gray-600"
 						onClick={() => {
-							handleOperatorClick(FunctionalOperator.equals);
+							handleOperatorClick(GeneralOperator.equals);
 						}}>
 						<span>
 							<FaEquals size={25} />

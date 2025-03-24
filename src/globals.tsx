@@ -1,15 +1,17 @@
 import { FaPlusMinus, FaPercent, FaDivide, FaXmark, FaEquals, FaPlus, FaMinus } from 'react-icons/fa6';
+import { TbXPowerY } from 'react-icons/tb';
 
 export enum FunctionalOperator {
 	plus = '+',
 	minus = '_',
-	equals = '=',
 	mult = '*',
 	div = '/',
+	pow = '^',
 } // minus is marked as underscore to enable calculations on negative numbers
 
 export enum GeneralOperator {
 	inverse = '-',
+	equals = '=',
 }
 
 export interface Operation {
@@ -133,18 +135,26 @@ export function calculateFromOnp(n: string): number {
 	return s.pop()!;
 }
 
-export function getIconForOperator(operator: FunctionalOperator) {
+export function getIconForOperator(operator: FunctionalOperator | GeneralOperator) {
 	switch (operator) {
 		case FunctionalOperator.plus:
 			return <FaPlus size={25} />;
+
+		case FunctionalOperator.pow:
+			return <TbXPowerY />;
+
 		case FunctionalOperator.minus:
 			return <FaMinus size={25} />;
-		case FunctionalOperator.equals:
+
+		case GeneralOperator.equals:
 			return <FaEquals size={25} />;
+
 		case FunctionalOperator.mult:
 			return <FaXmark size={25} />;
+
 		case FunctionalOperator.div:
 			return <FaDivide size={25} />;
+
 		default:
 			return null;
 	}

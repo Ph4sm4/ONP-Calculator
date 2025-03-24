@@ -477,7 +477,7 @@ video {
   grid-template-rows: repeat(5, 60px);
 
   place-items: center;
-  background-color: rgb(29, 32, 32);
+  background-color: #1d2020;
   gap: 10px;
   padding: 20px 10px;
   border-radius: 18px;
@@ -506,7 +506,6 @@ video {
   transform: scale(0);
   transition: all .3s ease-in-out;
   transform-origin: left top;
-  padding-right: 40px;
 }
 
 .operation-displayer.active {
