@@ -93,14 +93,15 @@ function App() {
 	}
 
 	useEffect(() => {
-		setHistoricalOperations([
-			...historicalOperations,
-			{
-				operations: operations,
-				value: lastCalculatedValue?.value,
-				equationString: lastCalculatedValue?.equationStr.replace('-', '_'),
-			},
-		]);
+		if (lastCalculatedValue.equationStr.length)
+			setHistoricalOperations([
+				...historicalOperations,
+				{
+					operations: operations,
+					value: lastCalculatedValue?.value,
+					equationString: lastCalculatedValue?.equationStr.replace('-', '_'),
+				},
+			]);
 	}, [newEquationTrigger]);
 
 	function reset() {
