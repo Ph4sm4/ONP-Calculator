@@ -533,3 +533,10 @@ video {
 ::-webkit-scrollbar-thumb:hover {
   background: rgb(11, 99, 110);
 }
+
+@media screen and (max-width: 1200px) {
+  .operation-displayer.active {
+    position: initial;
+    width: 100%;
+  }
+}

@@ -49,7 +49,7 @@ function App() {
 
 		const onpEquation: string = convertToOnp(equationString.substring(0, equationString.length - 1));
 		console.log('onp equation:', onpEquation);
-		const value: number = restrictDigitsAfterDecimalPoint(calculateFromOnp(onpEquation).toString()) as number;
+		const value: number = restrictDigitsAfterDecimalPoint(calculateFromOnp(onpEquation)?.toString()) as number;
 
 		if (isNaN(value)) {
 			setDisplayString('NaN');
@@ -208,15 +208,179 @@ function App() {
 
 	return (
 		<div className="flex w-[90%] mx-auto min-h-[100vh] mt-20">
-			<div className="w-[500px] h-[50%] bg-[#484f50] rounded-lg px-5 py-10 border-[2px] border-cyan-300 calc-holder relative">
-				<div className="bg-gray-800 rounded-lg shadow-xl px-4 py-2 text-cyan-300 font-medium text-4xl text-end tracking-wide whitespace-nowrap border-2 border-gray-600">
-					<div className="flex flex-col gap-2 overflow-x-auto">
-						<span className="w-full">{restrictDigitsAfterDecimalPoint(displayString)}</span>
-						<span className="text-white opacity-50 text-xl w-full">{displayEquationString(equationString)}</span>
+			<div className="relative gap-10 flex flex-col">
+				<div className="max-w-[500px] w-full bg-[#484f50] rounded-lg px-5 py-10 border-[2px] border-cyan-300 calc-holder h-fit">
+					<div className="bg-gray-800 rounded-lg shadow-xl px-4 py-2 text-cyan-300 font-medium text-4xl text-end tracking-wide whitespace-nowrap border-2 border-gray-600">
+						<div className="flex flex-col gap-2 overflow-x-auto">
+							<span className="w-full">{restrictDigitsAfterDecimalPoint(displayString)}</span>
+							<span className="text-white opacity-50 text-xl w-full">{displayEquationString(equationString) || '0'}</span>
+						</div>
+					</div>
+					<div className="buttons-holder mt-10">
+						<div className="text-white bg-cyan-900" onClick={reset}>
+							<span>C</span>
+						</div>
+						<div className="text-white bg-cyan-900" onClick={handleBackspace}>
+							<span>
+								<IoBackspaceOutline size={40} />
+							</span>
+						</div>
+						<div
+							className="text-white bg-cyan-900"
+							onClick={() => {
+								handleOperatorClick(FunctionalOperator.pow);
+							}}>
+							<span>
+								<TbXPowerY />
+							</span>
+						</div>
+
+						<div
+							className="text-cyan-300 bg-gray-600"
+							onClick={() => {
+								handleOperatorClick(FunctionalOperator.div);
+							}}>
+							<span>
+								<FaDivide size={25} />
+							</span>
+						</div>
+						<div
+							className="text-cyan-300 bg-gray-800"
+							onClick={() => {
+								handleNumberClick('7');
+							}}>
+							<span>7</span>
+						</div>
+						<div
+							className="text-cyan-300 bg-gray-800"
+							onClick={() => {
+								handleNumberClick('8');
+							}}>
+							<span>8</span>
+						</div>
+						<div
+							className="text-cyan-300 bg-gray-800"
+							onClick={() => {
+								handleNumberClick('9');
+							}}>
+							<span>9</span>
+						</div>
+						<div
+							className="text-cyan-300 bg-gray-600"
+							onClick={() => {
+								handleOperatorClick(FunctionalOperator.mult);
+							}}>
+							<span>
+								<FaXmark size={25} />
+							</span>
+						</div>
+						<div
+							className="text-cyan-300 bg-gray-800"
+							onClick={() => {
+								handleNumberClick('4');
+							}}>
+							<span>4</span>
+						</div>
+						<div
+							className="text-cyan-300 bg-gray-800"
+							onClick={() => {
+								handleNumberClick('5');
+							}}>
+							<span>5</span>
+						</div>
+						<div
+							className="text-cyan-300 bg-gray-800"
+							onClick={() => {
+								handleNumberClick('6');
+							}}>
+							<span>6</span>
+						</div>
+						<div
+							className="text-cyan-300 bg-gray-600"
+							onClick={() => {
+								const end = equationString[equationString.length - 1];
+
+								if (end === FunctionalOperator.minus || end === '-') return;
+
+								if (equationString.includes(GeneralOperator.equals)) {
+									console.log(equationString.substring(equationString.indexOf('=') + 1, equationString.length), equationString);
+									setEquationString(equationString.substring(equationString.indexOf('=') + 1, equationString.length));
+								}
+
+								const treatAsInversion: FunctionalOperator[] = [FunctionalOperator.div, FunctionalOperator.mult];
+								// in case of a minus we need to replace only if it ends with a + or a -
+								// if it ends with multiplication or division we need to treat it not as subtraction but as a sign change
+								if (treatAsInversion.includes(end as FunctionalOperator) || !equationString.length || newEquationVar) {
+									handleNumberClick('-');
+								} else {
+									handleOperatorClick(FunctionalOperator.minus);
+								}
+							}}>
+							<span>
+								<FaMinus size={25} />
+							</span>
+						</div>
+
+						<div
+							className="text-cyan-300 bg-gray-800"
+							onClick={() => {
+								handleNumberClick('1');
+							}}>
+							<span>1</span>
+						</div>
+
+						<div
+							className="text-cyan-300 bg-gray-800"
+							onClick={() => {
+								handleNumberClick('2');
+							}}>
+							<span>2</span>
+						</div>
+						<div
+							className="text-cyan-300 bg-gray-800"
+							onClick={() => {
+								handleNumberClick('3');
+							}}>
+							<span>3</span>
+						</div>
+						<div
+							className="text-cyan-300  bg-gray-600"
+							onClick={() => {
+								handleOperatorClick(FunctionalOperator.plus);
+							}}>
+							<span>
+								<FaPlus size={25} />
+							</span>
+						</div>
+						<div
+							className="!w-full col-span-2 text-cyan-300 bg-gray-800"
+							onClick={() => {
+								handleNumberClick('0');
+							}}>
+							<span>0</span>
+						</div>
+						<div
+							className="text-cyan-300 bg-gray-800"
+							onClick={() => {
+								if (displayString.includes('.')) return;
+
+								handleNumberClick('.');
+							}}>
+							<span>.</span>
+						</div>
+						<div
+							className="text-cyan-300 bg-gray-600"
+							onClick={() => {
+								handleOperatorClick(GeneralOperator.equals);
+							}}>
+							<span>
+								<FaEquals size={25} />
+							</span>
+						</div>
 					</div>
 				</div>
 				<div
-					className={`operation-displayer bg-gray-800 absolute right-[-430px] rounded-lg top-0 text-cyan-300 w-[400px] py-4 px-6 flex flex-col max-h-[100%] overflow-y-auto
+					className={`operation-displayer bg-gray-800 absolute left-[530px] rounded-lg top-0 text-cyan-300 w-[400px] max-w-[500px] py-4 px-6 flex flex-col max-h-[600px] overflow-y-auto
 						${historicalOperations.length || operations.length ? 'active' : ''}
 					`}>
 					<div className="flex items-center justify-between border-b-cyan-300 border-b-2 mb-5 pb-2 ">
@@ -228,15 +392,16 @@ function App() {
 					<ul className={`flex flex-col gap-2} ${operations.length ? 'mb-10' : ''}`}>
 						{operations.map((x: Operation, index: number) => {
 							return (
-								<li className="flex items-center text-2xl">
+								<li className="flex items-center text-2xl" key={'operation' + index}>
 									{x.value} <span className="ml-auto">{getIconForOperator(x.operator)}</span>
 								</li>
 							);
 						})}
 					</ul>
-					{[...historicalOperations].reverse().map((x: HistoricalOperation) => {
+					{[...historicalOperations].reverse().map((x: HistoricalOperation, index: number) => {
+						console.log(x);
 						return (
-							<div className="flex text-xl flex-col mb-10 gap-3 bg-[#1d2020] px-3 py-2 rounded-lg">
+							<div className="flex text-xl flex-col mb-10 gap-3 bg-[#1d2020] px-3 py-2 rounded-lg" key={'historical-operation' + index}>
 								<span className="text-white opacity-50">{displayEquationString(x.equationString)}</span>
 								<ul className="flex flex-col gap-2">
 									{x.operations.map((a: Operation) => {
@@ -250,168 +415,6 @@ function App() {
 							</div>
 						);
 					})}
-				</div>
-				<div className="buttons-holder mt-10">
-					<div className="text-white bg-cyan-900" onClick={reset}>
-						<span>C</span>
-					</div>
-					<div className="text-white bg-cyan-900" onClick={handleBackspace}>
-						<span>
-							<IoBackspaceOutline size={40} />
-						</span>
-					</div>
-					<div
-						className="text-white bg-cyan-900"
-						onClick={() => {
-							handleOperatorClick(FunctionalOperator.pow);
-						}}>
-						<span>
-							<TbXPowerY />
-						</span>
-					</div>
-
-					<div
-						className="text-cyan-300 bg-gray-600"
-						onClick={() => {
-							handleOperatorClick(FunctionalOperator.div);
-						}}>
-						<span>
-							<FaDivide size={25} />
-						</span>
-					</div>
-					<div
-						className="text-cyan-300 bg-gray-800"
-						onClick={() => {
-							handleNumberClick('7');
-						}}>
-						<span>7</span>
-					</div>
-					<div
-						className="text-cyan-300 bg-gray-800"
-						onClick={() => {
-							handleNumberClick('8');
-						}}>
-						<span>8</span>
-					</div>
-					<div
-						className="text-cyan-300 bg-gray-800"
-						onClick={() => {
-							handleNumberClick('9');
-						}}>
-						<span>9</span>
-					</div>
-					<div
-						className="text-cyan-300 bg-gray-600"
-						onClick={() => {
-							handleOperatorClick(FunctionalOperator.mult);
-						}}>
-						<span>
-							<FaXmark size={25} />
-						</span>
-					</div>
-					<div
-						className="text-cyan-300 bg-gray-800"
-						onClick={() => {
-							handleNumberClick('4');
-						}}>
-						<span>4</span>
-					</div>
-					<div
-						className="text-cyan-300 bg-gray-800"
-						onClick={() => {
-							handleNumberClick('5');
-						}}>
-						<span>5</span>
-					</div>
-					<div
-						className="text-cyan-300 bg-gray-800"
-						onClick={() => {
-							handleNumberClick('6');
-						}}>
-						<span>6</span>
-					</div>
-					<div
-						className="text-cyan-300 bg-gray-600"
-						onClick={() => {
-							const end = equationString[equationString.length - 1];
-
-							if (end === FunctionalOperator.minus || end === '-') return;
-
-							if (equationString.includes(GeneralOperator.equals)) {
-								console.log(equationString.substring(equationString.indexOf('=') + 1, equationString.length), equationString);
-								setEquationString(equationString.substring(equationString.indexOf('=') + 1, equationString.length));
-							}
-
-							const treatAsInversion: FunctionalOperator[] = [FunctionalOperator.div, FunctionalOperator.mult];
-							// in case of a minus we need to replace only if it ends with a + or a -
-							// if it ends with multiplication or division we need to treat it not as subtraction but as a sign change
-							if (treatAsInversion.includes(end as FunctionalOperator) || !equationString.length || newEquationVar) {
-								handleNumberClick('-');
-							} else {
-								handleOperatorClick(FunctionalOperator.minus);
-							}
-						}}>
-						<span>
-							<FaMinus size={25} />
-						</span>
-					</div>
-
-					<div
-						className="text-cyan-300 bg-gray-800"
-						onClick={() => {
-							handleNumberClick('1');
-						}}>
-						<span>1</span>
-					</div>
-
-					<div
-						className="text-cyan-300 bg-gray-800"
-						onClick={() => {
-							handleNumberClick('2');
-						}}>
-						<span>2</span>
-					</div>
-					<div
-						className="text-cyan-300 bg-gray-800"
-						onClick={() => {
-							handleNumberClick('3');
-						}}>
-						<span>3</span>
-					</div>
-					<div
-						className="text-cyan-300  bg-gray-600"
-						onClick={() => {
-							handleOperatorClick(FunctionalOperator.plus);
-						}}>
-						<span>
-							<FaPlus size={25} />
-						</span>
-					</div>
-					<div
-						className="!w-full col-span-2 text-cyan-300 bg-gray-800"
-						onClick={() => {
-							handleNumberClick('0');
-						}}>
-						<span>0</span>
-					</div>
-					<div
-						className="text-cyan-300 bg-gray-800"
-						onClick={() => {
-							if (displayString.includes('.')) return;
-
-							handleNumberClick('.');
-						}}>
-						<span>.</span>
-					</div>
-					<div
-						className="text-cyan-300 bg-gray-600"
-						onClick={() => {
-							handleOperatorClick(GeneralOperator.equals);
-						}}>
-						<span>
-							<FaEquals size={25} />
-						</span>
-					</div>
 				</div>
 			</div>
 		</div>
